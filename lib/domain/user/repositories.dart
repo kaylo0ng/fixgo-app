@@ -5,7 +5,7 @@ import 'package:fixgo/domain/core/value_objects.dart';
 abstract interface class IUserRepository {
   Future<Result<AppUser>> getById(UserId id);
 
-  Future<Result<AppUser>> getByEmail(Email email);
+  Future<Result<AppUser?>> getByEmail(Email email);
 
   Future<Result<AppUser>> create(AppUser user);
 

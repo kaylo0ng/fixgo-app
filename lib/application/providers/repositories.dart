@@ -2,8 +2,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'package:fixgo/domain/request/repositories.dart';
 import 'package:fixgo/domain/technician/repositories.dart';
-import 'package:fixgo/domain/user/repositories.dart';
-import 'package:fixgo/domain/category/repositories.dart';
+import 'package:fixgo/domain/user/repositories.dart' as user_domain;
+import 'package:fixgo/domain/category/repositories.dart' as category_domain;
 import 'package:fixgo/infrastructure/repositories/mock_repositories.dart';
 
 final serviceRequestRepositoryProvider = Provider<IServiceRequestRepository>((ref) {
@@ -22,10 +22,10 @@ final ratingRepositoryProvider = Provider<IRatingRepository>((ref) {
   return MockRatingRepository();
 });
 
-final userRepositoryProvider = Provider<IUserRepository>((ref) {
+final userRepositoryProvider = Provider<user_domain.IUserRepository>((ref) {
   return MockUserRepository();
 });
 
-final categoryRepositoryProvider = Provider<ICategoryRepository>((ref) {
+final categoryRepositoryProvider = Provider<category_domain.ICategoryRepository>((ref) {
   return MockCategoryRepository();
 });

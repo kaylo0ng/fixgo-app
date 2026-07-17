@@ -11,26 +11,24 @@ import 'package:fixgo/core/domain/enums/user_role.dart';
 class DTOMapper {
   static Map<String, dynamic> serviceCategoryToJson(ServiceCategory category) {
     return {
-      'id': category.id.value,
+      'id': category.id,
       'name': category.name.value,
       'iconName': category.iconName,
       'description': category.description,
       'isActive': category.isActive,
-      'parentId': category.parentId?.value,
+      'parentId': category.parentId,
       'sortOrder': category.sortOrder,
     };
   }
 
   static ServiceCategory serviceCategoryFromJson(Map<String, dynamic> json) {
     return ServiceCategory(
-      id: ServiceCategoryId.create(json['id'] as String).value!,
+      id: json['id'] as String,
       name: NonEmptyString.create(json['name'] as String).value!,
       iconName: json['iconName'] as String,
       description: json['description'] as String,
       isActive: json['isActive'] as bool? ?? true,
-      parentId: json['parentId'] != null
-          ? ServiceCategoryId.create(json['parentId'] as String).value
-          : null,
+      parentId: json['parentId'] as String?,
       sortOrder: json['sortOrder'] as int? ?? 0,
     );
   }
@@ -165,12 +163,13 @@ class DTOMapper {
       'technicianId': rating.technicianId,
       'score': rating.score.value,
       'comment': rating.comment,
-      'categories': rating.categories.map((k, v) => MapEntry(k, v.value)).toList(),
+      'categories': rating.categories.map((k, v) => MapEntry(k, v.value)),
       'createdAt': rating.createdAt.toIso8601String(),
     };
   }
 
   static Rating ratingFromJson(Map<String, dynamic> json) {
+    final categoriesJson = json['categories'] as Map<String, dynamic>;
     return Rating(
       id: json['id'] as String,
       requestId: json['requestId'] as String,
@@ -178,10 +177,7 @@ class DTOMapper {
       technicianId: json['technicianId'] as String,
       score: RatingValue(json['score'] as double),
       comment: json['comment'] as String,
-      categories: (json['categories'] as List).map((e) {
-        final entry = e as MapEntry<String, dynamic>;
-        return MapEntry(entry.key, RatingValue(entry.value as double));
-      }).toList(),
+      categories: categoriesJson.map((k, v) => MapEntry(k, RatingValue(v as double))),
       createdAt: DateTime.parse(json['createdAt'] as String),
     );
   }

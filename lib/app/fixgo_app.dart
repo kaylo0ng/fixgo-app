@@ -1,22 +1,30 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'package:fixgo/app/theme/app_theme.dart';
 import 'package:fixgo/features/home/presentation/home_screen.dart';
+import 'package:fixgo/infrastructure/services/service_locator.dart';
 import 'package:fixgo/l10n/app_localizations.dart';
 
-class FixGoApp extends StatefulWidget {
+class FixGoApp extends ConsumerStatefulWidget {
   const FixGoApp({super.key});
 
   @override
-  State<FixGoApp> createState() => _FixGoAppState();
+  ConsumerState<FixGoApp> createState() => _FixGoAppState();
 }
 
-class _FixGoAppState extends State<FixGoApp> {
+class _FixGoAppState extends ConsumerState<FixGoApp> {
   final GlobalKey<NavigatorState> navigatorKey = GlobalKey<NavigatorState>();
   final GlobalKey<ScaffoldMessengerState> messengerKey = GlobalKey<ScaffoldMessengerState>();
 
   final ThemeMode _themeMode = ThemeMode.system;
+
+  @override
+  void initState() {
+    super.initState();
+    setupDependencies();
+  }
 
   @override
   Widget build(BuildContext context) {

@@ -1,10 +1,10 @@
 import 'package:fixgo/domain/core/result.dart';
+import 'package:fixgo/domain/category/service_category.dart';
 import 'package:fixgo/domain/request/service_request.dart';
 import 'package:fixgo/domain/request/offer.dart';
 import 'package:fixgo/domain/technician/technician_profile.dart';
 import 'package:fixgo/domain/rating/rating.dart';
 import 'package:fixgo/domain/user/app_user.dart';
-import 'package:fixgo/domain/category/service_category.dart';
 import 'package:fixgo/domain/core/value_objects.dart';
 import 'package:fixgo/domain/request/repositories.dart';
 import 'package:fixgo/domain/technician/repositories.dart';
@@ -275,7 +275,7 @@ class MockRatingRepository implements IRatingRepository {
   }
 }
 
-class MockUserRepository implements IUserRepository {
+class MockUserRepository implements user_domain.IUserRepository {
   final Map<String, AppUser> _users = {};
   final Map<String, AppUser> _usersByEmail = {};
 
@@ -287,9 +287,9 @@ class MockUserRepository implements IUserRepository {
   }
 
   @override
-  Future<Result<AppUser>> getByEmail(Email email) async {
+  Future<Result<AppUser?>> getByEmail(Email email) async {
     final user = _usersByEmail[email.value];
-    if (user == null) return Result.ok(null as AppUser?);
+    if (user == null) return Result.ok(null);
     return Result.ok(user);
   }
 
@@ -318,70 +318,38 @@ class MockUserRepository implements IUserRepository {
   }
 }
 
-class MockCategoryRepository implements ICategoryRepository {
+class MockCategoryRepository implements category_domain.ICategoryRepository {
   final Map<String, ServiceCategory> _categories = {};
 
   MockCategoryRepository() {
-    _categories['plumbing'] = ServiceCategory(
-      id: ServiceCategoryId._('plumbing'),
-      name: NonEmptyString._('Plomería'),
-      iconName: 'plumbing',
-      description: 'Servicios de plomería y tuberías',
-    );
-    _categories['electrical'] = ServiceCategory(
-      id: ServiceCategoryId._('electrical'),
-      name: NonEmptyString._('Electricidad'),
-      iconName: 'electrical_services',
-      description: 'Servicios eléctricos e instalaciones',
-    );
-    _categories['carpentry'] = ServiceCategory(
-      id: ServiceCategoryId._('carpentry'),
-      name: NonEmptyString._('Carpintería'),
-      iconName: 'carpentry',
-      description: 'Trabajos de carpintería y madera',
-    );
-    _categories['painting'] = ServiceCategory(
-      id: ServiceCategoryId._('painting'),
-      name: NonEmptyString._('Pintura'),
-      iconName: 'format_paint',
-      description: 'Pintura interior y exterior',
-    );
-    _categories['hvac'] = ServiceCategory(
-      id: ServiceCategoryId._('hvac'),
-      name: NonEmptyString._('Climatización'),
-      iconName: 'ac_unit',
-      description: 'Aire acondicionado y calefacción',
-    );
-    _categories['appliance_repair'] = ServiceCategory(
-      id: ServiceCategoryId._('appliance_repair'),
-      name: NonEmptyString._('Reparación de electrodomésticos'),
-      iconName: 'kitchen',
-      description: 'Reparación de electrodomésticos del hogar',
-    );
-    _categories['cleaning'] = ServiceCategory(
-      id: ServiceCategoryId._('cleaning'),
-      name: NonEmptyString._('Limpieza'),
-      iconName: 'cleaning_services',
-      description: 'Servicios de limpieza profesional',
-    );
-    _categories['gardening'] = ServiceCategory(
-      id: ServiceCategoryId._('gardening'),
-      name: NonEmptyString._('Jardinería'),
-      iconName: 'yard',
-      description: 'Mantenimiento de jardines y áreas verdes',
-    );
-    _categories['masonry'] = ServiceCategory(
-      id: ServiceCategoryId._('masonry'),
-      name: NonEmptyString._('Albañilería'),
-      iconName: 'construction',
-      description: 'Trabajos de albañilería y construcción',
-    );
-    _categories['roofing'] = ServiceCategory(
-      id: ServiceCategoryId._('roofing'),
-      name: NonEmptyString._('Techos e impermeabilización'),
-      iconName: 'roofing',
-      description: 'Instalación y reparación de techos',
-    );
+    _initCategories();
+  }
+
+  void _initCategories() {
+    final categoriesData = [
+      ('plumbing', 'Plomería', 'plumbing', 'Servicios de plomería y tuberías'),
+      ('electrical', 'Electricidad', 'electrical_services', 'Servicios eléctricos e instalaciones'),
+      ('carpentry', 'Carpintería', 'carpentry', 'Trabajos de carpintería y madera'),
+      ('painting', 'Pintura', 'format_paint', 'Pintura interior y exterior'),
+      ('hvac', 'Climatización', 'ac_unit', 'Aire acondicionado y calefacción'),
+      ('appliance_repair', 'Reparación de electrodomésticos', 'kitchen', 'Reparación de electrodomésticos del hogar'),
+      ('cleaning', 'Limpieza', 'cleaning_services', 'Servicios de limpieza profesional'),
+      ('gardening', 'Jardinería', 'yard', 'Mantenimiento de jardines y áreas verdes'),
+      ('masonry', 'Albañilería', 'construction', 'Trabajos de albañilería y construcción'),
+      ('roofing', 'Techos e impermeabilización', 'roofing', 'Instalación y reparación de techos'),
+    ];
+
+    for (final (id, name, icon, desc) in categoriesData) {
+      final result = ServiceCategory.create(
+        id: id,
+        name: name,
+        iconName: icon,
+        description: desc,
+      );
+      if (result.isOk) {
+        _categories[id] = result.value!;
+      }
+    }
   }
 
   @override
@@ -402,7 +370,7 @@ class MockCategoryRepository implements ICategoryRepository {
 
   @override
   Future<Result<ServiceCategory>> create(ServiceCategory category) async {
-    _categories[category.id.value] = category;
+    _categories[category.id] = category;
     return Result.ok(category);
   }
 }

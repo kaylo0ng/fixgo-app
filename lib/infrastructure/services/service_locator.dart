@@ -8,7 +8,6 @@ import 'package:fixgo/infrastructure/repositories/mock_repositories.dart';
 final serviceLocator = GetIt.instance;
 
 void setupDependencies() {
-  // Mock repositories (replace with Firebase implementations later)
   serviceLocator.registerLazySingleton<IServiceRequestRepository>(
     () => MockServiceRequestRepository(),
   );

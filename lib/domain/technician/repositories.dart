@@ -15,6 +15,9 @@ abstract interface class ITechnicianProfileRepository {
     required Coordinates location, required double radiusKm,
     ServiceCategoryId? categoryId, bool onlyVerified = true,
   });
+  Future<Result<List<TechnicianProfile>>> getTopRated({
+    required int limit, ServiceCategoryId? categoryId,
+  });
 }
 
 abstract interface class IRatingRepository {

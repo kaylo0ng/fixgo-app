@@ -39,6 +39,19 @@ dependencies:
   intl: ^0.20.2
   sentry_flutter: ^7.0.0
 
+  # State management
+  flutter_riverpod: ^2.6.1
+  riverpod_annotation: ^2.6.1
+
+  # Immutable state & codegen
+  freezed_annotation: ^3.0.0
+
+  # JSON serialization
+  json_annotation: ^4.9.0
+
+  # Service locator
+  get_it: ^8.0.3
+
 dev_dependencies:
   flutter_test:
     sdk: flutter
@@ -46,9 +59,15 @@ dev_dependencies:
   # The "flutter_lints" package below contains a set of recommended lints to
   # encourage good coding practices. The lint set provided by the package is
   # activated in the `analysis_options.yaml` file located at the root of your
-  # package. See that file for information about deactivating specific lint
+  # project. See that file for information about deactivating specific lint
   # rules and activating additional ones.
   flutter_lints: ^6.0.0
+
+  # Code generation
+  riverpod_generator: ^2.6.5
+  freezed: ^3.0.6
+  build_runner: ^2.4.15
+  json_serializable: ^6.9.5
 
 # For information on the generic Dart part of this file, see the
 # following page: https://dart.dev/tools/pub/pubspec

@@ -1,18 +1,19 @@
-import 'package:riverpod_annotation/riverpod_annotation.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import 'package:fixgo/core/domain/enums/user_role.dart';
 import 'package:fixgo/domain/core/result.dart';
+import 'package:fixgo/domain/core/value_objects.dart';
 import 'package:fixgo/domain/user/app_user.dart';
 import 'package:fixgo/domain/user/repositories.dart';
 import 'package:fixgo/application/user/app_user_state.dart';
+import 'package:fixgo/application/providers/repositories.dart';
 
-part 'app_user_viewmodel.g.dart';
+final appUserViewModelProvider = StateNotifierProvider<AppUserViewModel, AppUserState>(AppUserViewModel.new);
 
-@riverpod
-class AppUserViewModel extends _$AppUserViewModel {
-  @override
-  AppUserState build() {
-    return const AppUserState();
-  }
+class AppUserViewModel extends StateNotifier<AppUserState> {
+  AppUserViewModel(this.ref) : super(const AppUserState());
+
+  final Ref ref;
 
   Future<Result<AppUser>> login({
     required String email,
@@ -33,7 +34,7 @@ class AppUserViewModel extends _$AppUserViewModel {
       (user) {
         if (user == null) {
           state = state.copyWith(isSubmitting: false, error: 'Usuario no encontrado');
-          return Result.err(const NotFoundFailure('Usuario', email));
+          return Result.err(NotFoundFailure('Usuario', email));
         }
         state = state.copyWith(currentUser: user, isSubmitting: false);
         return Result.ok(user);
@@ -65,7 +66,7 @@ class AppUserViewModel extends _$AppUserViewModel {
     final existingResult = await repo.getByEmail(emailResult.value);
     if (existingResult.isOk && existingResult.value != null) {
       state = state.copyWith(isSubmitting: false, error: 'El email ya está registrado');
-      return Result.err(const ValidationFailure([EmptyString('email')]));
+      return Result.err(ValidationFailure([EmptyString('email')]));
     }
 
     final userRole = role == 'technician' ? UserRole.technician : UserRole.client;
@@ -96,7 +97,7 @@ class AppUserViewModel extends _$AppUserViewModel {
   Future<void> loadCurrentUser(String userId) async {
     state = state.copyWith(isLoading: true, error: null);
     final repo = ref.read(userRepositoryProvider);
-    final result = await repo.getById(userId);
+    final result = await repo.getById(UserId.create(userId).value!);
 
     result.fold(
       (user) => state = state.copyWith(currentUser: user, isLoading: false),
