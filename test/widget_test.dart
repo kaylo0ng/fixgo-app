@@ -1,30 +1,40 @@
-// This is a basic Flutter widget test.
-//
-// To perform an interaction with a widget in your test, use the WidgetTester
-// utility in the flutter_test package. For example, you can send tap and scroll
-// gestures. You can also use WidgetTester to find child widgets in the widget
-// tree, read text, and verify that the values of widget properties are correct.
-
+import 'package:fixgo/app/fixgo_app.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
-import 'package:fixgo/main.dart';
-
 void main() {
-  testWidgets('Counter increments smoke test', (WidgetTester tester) async {
-    // Build our app and trigger a frame.
-    await tester.pumpWidget(const MyApp());
+  testWidgets('shows FixGo home screen', (WidgetTester tester) async {
+    await tester.pumpWidget(
+      const MaterialApp(
+        locale: Locale('es'),
+        home: FixGoApp(),
+      ),
+    );
 
-    // Verify that our counter starts at 0.
-    expect(find.text('0'), findsOneWidget);
-    expect(find.text('1'), findsNothing);
+    await tester.pumpAndSettle();
 
-    // Tap the '+' icon and trigger a frame.
-    await tester.tap(find.byIcon(Icons.add));
-    await tester.pump();
+    expect(find.text('FixGo'), findsOneWidget);
+    expect(
+      find.text('Servicios del hogar con técnicos confiables'),
+      findsOneWidget,
+    );
+    expect(find.text('Publicar solicitud'), findsOneWidget);
+    expect(find.text('Categorías principales'), findsOneWidget);
+  });
 
-    // Verify that our counter has incremented.
-    expect(find.text('0'), findsNothing);
-    expect(find.text('1'), findsOneWidget);
+  testWidgets('buttons open their destination screens', (WidgetTester tester) async {
+    await tester.pumpWidget(
+      const MaterialApp(
+        locale: Locale('es'),
+        home: FixGoApp(),
+      ),
+    );
+
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Publicar solicitud'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Publicar solicitud'), findsWidgets);
+    expect(find.text('Describe el trabajo que necesitas'), findsOneWidget);
   });
 }

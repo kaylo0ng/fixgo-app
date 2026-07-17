@@ -1,0 +1,17 @@
+{
+  "appTitle": "FixGo",
+  "homeTitle": "Servicios del hogar con técnicos confiables",
+  "homeSubtitle": "Publica lo que necesitas, recibe ofertas y elige al técnico que mejor se ajuste a tu solicitud.",
+  "postRequestButton": "Publicar solicitud",
+  "technicianLoginButton": "Ingresar como técnico",
+  "mainCategoriesTitle": "Categorías principales",
+  "mvpFlowTitle": "Flujo del MVP",
+  "requestPublished": "Solicitud publicada",
+  "requestPublishedDescription": "El cliente describe el trabajo y su ubicación.",
+  "offersReceived": "Ofertas recibidas",
+  "offersReceivedDescription": "Los técnicos proponen precio, tiempo y condiciones.",
+  "technicianSelected": "Técnico seleccionado",
+  "technicianSelectedDescription": "El cliente elige con base en confianza y propuesta.",
+  "serviceRated": "Servicio calificado",
+  "serviceRatedDescription": "Ambas partes califican la experiencia al finalizar."
+}

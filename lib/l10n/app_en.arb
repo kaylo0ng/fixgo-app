@@ -1,0 +1,17 @@
+{
+  "appTitle": "FixGo",
+  "homeTitle": "Home services with trusted technicians",
+  "homeSubtitle": "Post what you need, receive offers, and choose the technician that fits your request.",
+  "postRequestButton": "Post request",
+  "technicianLoginButton": "Login as technician",
+  "mainCategoriesTitle": "Main categories",
+  "mvpFlowTitle": "MVP workflow",
+  "requestPublished": "Request published",
+  "requestPublishedDescription": "The client describes the job and location.",
+  "offersReceived": "Offers received",
+  "offersReceivedDescription": "Technicians propose price, time and conditions.",
+  "technicianSelected": "Technician selected",
+  "technicianSelectedDescription": "The client chooses based on trust and proposal.",
+  "serviceRated": "Service rated",
+  "serviceRatedDescription": "Both parties rate the experience after completion."
+}

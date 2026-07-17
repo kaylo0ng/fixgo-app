@@ -1,0 +1,216 @@
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+
+import 'package:fixgo/domain/core/result.dart';
+import 'package:fixgo/domain/request/service_request.dart';
+import 'package:fixgo/domain/request/offer.dart';
+import 'package:fixgo/domain/request/repositories.dart';
+import 'package:fixgo/application/service_request/service_request_state.dart';
+
+final serviceRequestViewModelProvider = StateNotifierProvider<ServiceRequestViewModel, ServiceRequestState>((ref) {
+  return ServiceRequestViewModel(ref);
+});
+
+class ServiceRequestViewModel extends StateNotifier<ServiceRequestState> {
+  ServiceRequestViewModel(this.ref) : super(const ServiceRequestState());
+
+  final Ref ref;
+
+  Future<void> loadMyRequests(String clientId) async {
+    state = state.copyWith(isLoading: true, error: null);
+    final repo = ref.read(serviceRequestRepositoryProvider);
+    final result = await repo.getByClientId(UserId.create(clientId).value!);
+
+    result.fold(
+      (requests) => state = state.copyWith(requests: requests, isLoading: false),
+      (failure) => state = state.copyWith(isLoading: false, error: failure.message),
+    );
+  }
+
+  Future<void> loadOpenRequests({
+    String? categoryId,
+    double? latitude,
+    double? longitude,
+    double? maxDistanceKm,
+  }) async {
+    state = state.copyWith(isLoading: true, error: null);
+    final repo = ref.read(serviceRequestRepositoryProvider);
+    final result = await repo.getOpenRequests(
+      categoryId: categoryId != null ? ServiceCategoryId._(categoryId) : null,
+      maxDistanceKm: maxDistanceKm,
+      location: latitude != null && longitude != null
+          ? Coordinates._((latitude!, longitude!))
+          : null,
+    );
+
+    result.fold(
+      (requests) => state = state.copyWith(openRequests: requests, isLoading: false),
+      (failure) => state = state.copyWith(isLoading: false, error: failure.message),
+    );
+  }
+
+  Future<Result<ServiceRequest>> createRequest({
+    required String id,
+    required String clientId,
+    required String categoryId,
+    required String title,
+    required String description,
+    required String address,
+    required double latitude,
+    required double longitude,
+    double? estimatedPrice,
+  }) async {
+    state = state.copyWith(isSubmitting: true, error: null, successMessage: null);
+    final repo = ref.read(serviceRequestRepositoryProvider);
+
+    final createResult = ServiceRequest.create(
+      id: id,
+      clientId: clientId,
+      categoryId: categoryId,
+      title: title,
+      description: description,
+      address: address,
+      latitude: latitude,
+      longitude: longitude,
+      estimatedPrice: estimatedPrice != null ? Price(estimatedPrice) : null,
+    );
+
+    if (createResult.isErr) {
+      state = state.copyWith(isSubmitting: false, error: createResult.failure.message);
+      return Result.err(createResult.failure);
+    }
+
+    final saveResult = await repo.create(createResult.value);
+
+    saveResult.fold(
+      (saved) {
+        state = state.copyWith(
+          requests: [...state.requests, saved],
+          isSubmitting: false,
+          successMessage: 'Solicitud creada correctamente',
+        );
+      },
+      (failure) => state = state.copyWith(isSubmitting: false, error: failure.message),
+    );
+
+    return saveResult;
+  }
+
+  Future<void> publishRequest(String requestId) async {
+    final repo = ref.read(serviceRequestRepositoryProvider);
+    final getResult = await repo.getById(RequestId._(requestId));
+
+    await getResult.fold(
+      (request) async {
+        final published = request.publish();
+        final saveResult = await repo.update(published);
+        saveResult.fold(
+          (saved) {
+            state = state.copyWith(
+              requests: state.requests.map((r) => r.id == saved.id ? saved : r).toList(),
+              openRequests: state.openRequests.map((r) => r.id == saved.id ? saved : r).toList(),
+            );
+          },
+          (failure) => state = state.copyWith(error: failure.message),
+        );
+      },
+      (failure) => state = state.copyWith(error: failure.message),
+    );
+  }
+
+  Future<void> loadRequestOffers(String requestId) async {
+    state = state.copyWith(isLoading: true, error: null);
+    final repo = ref.read(offerRepositoryProvider);
+    final result = await repo.getByRequestId(requestId);
+
+    result.fold(
+      (offers) => state = state.copyWith(offers: offers, isLoading: false),
+      (failure) => state = state.copyWith(isLoading: false, error: failure.message),
+    );
+  }
+
+  Future<void> submitOffer({
+    required String id,
+    required String requestId,
+    required String technicianId,
+    required double price,
+    required int durationMinutes,
+    required String message,
+  }) async {
+    state = state.copyWith(isSubmitting: true, error: null);
+    final repo = ref.read(offerRepositoryProvider);
+
+    final createResult = Offer.create(
+      id: id,
+      requestId: requestId,
+      technicianId: technicianId,
+      price: price,
+      durationMinutes: durationMinutes,
+      message: message,
+    );
+
+    if (createResult.isErr) {
+      state = state.copyWith(isSubmitting: false, error: createResult.failure.message);
+      return;
+    }
+
+    final saveResult = await repo.create(createResult.value);
+
+    saveResult.fold(
+      (saved) {
+        state = state.copyWith(
+          offers: [...state.offers, saved],
+          isSubmitting: false,
+          successMessage: 'Oferta enviada correctamente',
+        );
+      },
+      (failure) => state = state.copyWith(isSubmitting: false, error: failure.message),
+    );
+  }
+
+  Future<void> acceptOffer(String offerId, String requestId) async {
+    final offerRepo = ref.read(offerRepositoryProvider);
+    final requestRepo = ref.read(serviceRequestRepositoryProvider);
+
+    final offerResult = await offerRepo.getById(offerId);
+    await offerResult.fold(
+      (offer) async {
+        final accepted = offer.accept();
+        final saveOfferResult = await offerRepo.update(accepted);
+
+        await saveOfferResult.fold(
+          (savedOffer) async {
+            state = state.copyWith(offers: state.offers.map((o) => o.id == savedOffer.id ? savedOffer : o).toList());
+
+            final requestResult = await ref.read(serviceRequestRepositoryProvider).getById(RequestId._(requestId));
+            await requestResult.fold(
+              (request) async {
+                final updated = request.assignOffer(offerId);
+                final saveRequestResult = await ref.read(serviceRequestRepositoryProvider).update(updated);
+                saveRequestResult.fold(
+                  (savedRequest) {
+                    state = state.copyWith(
+                      selectedRequest: savedRequest,
+                      requests: state.requests.map((r) => r.id == savedRequest.id ? savedRequest : r).toList(),
+                    );
+                  },
+                  (failure) => state = state.copyWith(error: failure.message),
+                );
+              },
+              (failure) => state = state.copyWith(error: failure.message),
+            );
+          },
+          (failure) => state = state.copyWith(error: failure.message),
+        );
+      },
+      (failure) => state = state.copyWith(error: failure.message),
+    );
+  }
+
+  void clearError() {
+    state = state.copyWith(error: null);
+  }
+
+  void clearSuccess() {
+    state = state.copyWith(successMessage: null);
+  }
+}
