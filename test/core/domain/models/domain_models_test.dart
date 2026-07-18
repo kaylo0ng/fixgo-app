@@ -1,5 +1,5 @@
-import 'package:fixgo/core/domain/enums/service_request_status.dart';
-import 'package:fixgo/core/domain/enums/user_role.dart';
+import 'package:fixgo/domain/core/enums/service_request_status.dart';
+import 'package:fixgo/domain/core/enums/user_role.dart';
 import 'package:fixgo/core/domain/models/app_user.dart';
 import 'package:fixgo/core/domain/models/rating.dart';
 import 'package:fixgo/core/domain/models/service_request.dart';

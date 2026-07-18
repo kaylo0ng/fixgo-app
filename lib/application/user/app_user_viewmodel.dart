@@ -1,6 +1,6 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import 'package:fixgo/core/domain/enums/user_role.dart';
+import 'package:fixgo/domain/core/enums/user_role.dart';
 import 'package:fixgo/domain/core/result.dart';
 import 'package:fixgo/domain/core/value_objects.dart';
 import 'package:fixgo/domain/user/app_user.dart';

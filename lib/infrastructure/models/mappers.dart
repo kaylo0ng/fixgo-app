@@ -5,8 +5,8 @@ import 'package:fixgo/domain/technician/technician_profile.dart';
 import 'package:fixgo/domain/rating/rating.dart';
 import 'package:fixgo/domain/user/app_user.dart';
 import 'package:fixgo/domain/category/service_category.dart';
-import 'package:fixgo/core/domain/enums/service_request_status.dart';
-import 'package:fixgo/core/domain/enums/user_role.dart';
+import 'package:fixgo/domain/core/enums/service_request_status.dart';
+import 'package:fixgo/domain/core/enums/user_role.dart';
 
 class DTOMapper {
   static Map<String, dynamic> serviceCategoryToJson(ServiceCategory category) {

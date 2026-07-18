@@ -11,7 +11,7 @@ import 'package:fixgo/domain/technician/repositories.dart';
 import 'package:fixgo/domain/rating/rating.dart' as rating_domain;
 import 'package:fixgo/domain/user/repositories.dart' as user_domain;
 import 'package:fixgo/domain/category/repositories.dart' as category_domain;
-import 'package:fixgo/core/domain/enums/service_request_status.dart';
+import 'package:fixgo/domain/core/enums/service_request_status.dart';
 
 class MockServiceRequestRepository implements IServiceRequestRepository {
   final Map<String, ServiceRequest> _requests = {};

@@ -1,7 +1,7 @@
 import 'package:fixgo/domain/core/result.dart';
 import 'package:fixgo/domain/request/service_request.dart';
 import 'package:fixgo/domain/request/offer.dart';
-import 'package:fixgo/core/domain/enums/service_request_status.dart';
+import 'package:fixgo/domain/core/enums/service_request_status.dart';
 import 'package:fixgo/domain/core/value_objects.dart';
 
 abstract interface class IServiceRequestRepository {

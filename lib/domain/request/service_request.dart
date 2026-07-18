@@ -1,4 +1,4 @@
-import 'package:fixgo/core/domain/enums/service_request_status.dart';
+import 'package:fixgo/domain/core/enums/service_request_status.dart';
 import 'package:fixgo/domain/core/result.dart';
 import 'package:fixgo/domain/core/entity.dart';
 import 'package:fixgo/domain/core/value_objects.dart';
