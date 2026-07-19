@@ -6,22 +6,21 @@ import 'package:fixgo/domain/technician/technician_profile.dart';
 import 'package:fixgo/application/technician/technician_state.dart';
 import 'package:fixgo/application/providers/repositories.dart';
 
-final technicianViewModelProvider = NotifierProvider<TechnicianViewModel, TechnicianState>(TechnicianViewModel.new);
+final technicianViewModelProvider = StateNotifierProvider<TechnicianViewModel, TechnicianState>(TechnicianViewModel.new);
 
-class TechnicianViewModel extends Notifier<TechnicianState> {
-  @override
-  TechnicianState build() {
-    return const TechnicianState();
-  }
+class TechnicianViewModel extends StateNotifier<TechnicianState> {
+  TechnicianViewModel(this.ref) : super(const TechnicianLoading());
+
+  final Ref ref;
 
   Future<void> loadProfile(String userId) async {
-    state = state.copyWith(isLoading: true, error: null);
+    state = const TechnicianLoading();
     final repo = ref.read(technicianProfileRepositoryProvider);
     final result = await repo.getByUserId(UserId.create(userId).getOrThrow());
 
     result.fold(
-      (profile) => state = state.copyWith(profile: profile, isLoading: false),
-      (failure) => state = state.copyWith(isLoading: false, error: failure.message),
+      (profile) => state = TechnicianLoaded(profile: profile),
+      (failure) => state = TechnicianError(failure.message),
     );
   }
 
@@ -58,7 +57,7 @@ class TechnicianViewModel extends Notifier<TechnicianState> {
 
     saveResult.fold(
       (saved) {
-        state = state.copyWith(
+        state = TechnicianLoaded(
           profile: saved,
           isSubmitting: false,
           successMessage: 'Perfil de técnico creado correctamente',

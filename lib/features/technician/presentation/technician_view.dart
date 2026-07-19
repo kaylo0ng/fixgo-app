@@ -1,5 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+
+import 'package:fixgo/core/constants/service_categories.dart';
+import 'package:fixgo/application/technician/technician_state.dart';
 import 'package:fixgo/application/technician/technician_viewmodel.dart';
 
 class TechnicianView extends ConsumerWidget {
@@ -9,27 +12,31 @@ class TechnicianView extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final state = ref.watch(technicianViewModelProvider);
 
-    return stateWhen(
-      value: (state) => _buildContent(context, state),
-      loading: () => const Center(child: CircularProgressIndicator()),
-      error: (error, stackTrace) => Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Text('Error: $error'),
-            const SizedBox(height: 16),
-            FilledButton.icon(
-              onPressed: () => ref.read(technicianViewModelProvider.notifier).loadProfile('current_user_id'),
-              icon: const Icon(Icons.refresh_rounded),
-              label: const Text('Reintentar'),
-            ),
-          ],
+    return state.when(
+      loading: () => const Scaffold(
+        body: Center(child: CircularProgressIndicator()),
+      ),
+      loaded: (state) => _buildContent(context, state),
+      error: (error) => Scaffold(
+        body: Center(
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Text('Error: $error'),
+              const SizedBox(height: 16),
+              FilledButton.icon(
+                onPressed: () => ref.read(technicianViewModelProvider.notifier).loadProfile('current_user_id'),
+                icon: const Icon(Icons.refresh_rounded),
+                label: const Text('Reintentar'),
+              ),
+            ],
+          ),
         ),
       ),
     );
   }
 
-  Widget _buildContent(BuildContext context, TechnicianState state) {
+  Widget _buildContent(BuildContext context, TechnicianLoaded state) {
     return Scaffold(
       appBar: AppBar(title: const Text('Tu perfil de técnico')),
       body: SafeArea(
@@ -51,18 +58,24 @@ class TechnicianView extends ConsumerWidget {
               Consumer(
                 builder: (context, ref, _) {
                   final state = ref.watch(technicianViewModelProvider);
-                  return FilledButton.icon(
-                    onPressed: state.isSubmitting ? null : () => _showProfileForm(context, ref),
-                    icon: state.isSubmitting
-                        ? const SizedBox(
-                            width: 20,
-                            height: 20,
-                            child: CircularProgressIndicator(strokeWidth: 2),
-                          )
-                        : const Icon(Icons.person_add_alt_1_rounded),
-                    label: Text(state.isSubmitting
-                        ? 'Completando perfil...'
-                        : 'Completar perfil'),
+                  return state.when(
+                    loading: () => const Center(child: CircularProgressIndicator()),
+                    loaded: (state) => FilledButton.icon(
+                      onPressed: state.isSubmitting ? null : () => _showProfileForm(context, ref),
+                      icon: state.isSubmitting
+                          ? const SizedBox(
+                              width: 20,
+                              height: 20,
+                              child: CircularProgressIndicator(strokeWidth: 2),
+                            )
+                          : const Icon(Icons.person_add_alt_1_rounded),
+                      label: Text(state.isSubmitting ? 'Completando perfil...' : 'Completar perfil'),
+                    ),
+                    error: (error) => FilledButton.icon(
+                      onPressed: () => _showProfileForm(context, ref),
+                      icon: const Icon(Icons.person_add_alt_1_rounded),
+                      label: Text('Error: $error'),
+                    ),
                   );
                 },
               ),
@@ -105,7 +118,6 @@ class _TechnicianProfileFormState extends ConsumerState<_TechnicianProfileForm> 
   @override
   Widget build(BuildContext context) {
     final state = ref.watch(technicianViewModelProvider);
-    final categories = ref.watch(homeViewModelProvider).value?.categories ?? [];
 
     return Padding(
       padding: EdgeInsets.only(
@@ -135,7 +147,7 @@ class _TechnicianProfileFormState extends ConsumerState<_TechnicianProfileForm> 
                 ),
                 items: [
                   for (final cat in ServiceCategories.values)
-                    DropdownMenuItem(value: cat.id.value, child: Text(cat.name.value)),
+                    DropdownMenuItem(value: cat.id, child: Text(cat.name.value)),
                 ],
                 onChanged: (value) => setState(() => _selectedCategory = value),
                 validator: (value) => value == null ? 'Selecciona una categoría' : null,
@@ -199,17 +211,25 @@ class _TechnicianProfileFormState extends ConsumerState<_TechnicianProfileForm> 
               Consumer(
                 builder: (context, ref, _) {
                   final state = ref.watch(technicianViewModelProvider);
-                  return FilledButton.icon(
-                    onPressed: state.isSubmitting ? null : _submit,
-                    icon: state.isSubmitting
-                        ? const SizedBox(
-                            width: 20,
-                            height: 20,
-                            child: CircularProgressIndicator(strokeWidth: 2),
-                          )
-                        : const Icon(Icons.person_add_alt_1_rounded),
-                    label: Text(state.isSubmitting ? 'Creando perfil...' : 'Crear perfil'),
-                  ),
+                  return state.when(
+                    loading: () => const Center(child: CircularProgressIndicator()),
+                    loaded: (state) => FilledButton.icon(
+                      onPressed: state.isSubmitting ? null : _submit,
+                      icon: state.isSubmitting
+                          ? const SizedBox(
+                              width: 20,
+                              height: 20,
+                              child: CircularProgressIndicator(strokeWidth: 2),
+                            )
+                          : const Icon(Icons.person_add_alt_1_rounded),
+                      label: Text(state.isSubmitting ? 'Creando perfil...' : 'Crear perfil'),
+                    ),
+                    error: (error) => FilledButton.icon(
+                      onPressed: _submit,
+                      icon: const Icon(Icons.person_add_alt_1_rounded),
+                      label: Text('Error: $error'),
+                    ),
+                  );
                 },
               ),
             ],
@@ -233,7 +253,7 @@ class _TechnicianProfileFormState extends ConsumerState<_TechnicianProfileForm> 
       availabilityRadiusKm: int.parse(_radiusController.text),
     );
 
-    result.fold(
+    result.then((result) => result.fold(
       (saved) {
         Navigator.of(context).pop();
         ScaffoldMessenger.of(context).showSnackBar(
@@ -245,6 +265,6 @@ class _TechnicianProfileFormState extends ConsumerState<_TechnicianProfileForm> 
           SnackBar(content: Text(failure.message)),
         );
       },
-    );
+    ));
   }
 }

@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import 'package:fixgo/core/constants/service_categories.dart';
+import 'package:fixgo/l10n/app_localizations.dart';
 import 'package:fixgo/application/service_request/service_request_state.dart';
 import 'package:fixgo/application/service_request/service_request_viewmodel.dart';
-import 'package:fixgo/application/providers/repositories.dart';
-import 'package:fixgo/l10n/app_localizations.dart';
 
 class RequestView extends ConsumerWidget {
   const RequestView({super.key});
@@ -12,15 +12,13 @@ class RequestView extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final state = ref.watch(serviceRequestViewModelProvider);
-    final notifier = ref.read(serviceRequestViewModelProvider.notifier);
-    final localizations = AppLocalizations.of(context);
 
     return state.when(
-      data: (state) => _buildContent(context, ref, state, notifier, localizations),
       loading: () => const Scaffold(
         body: Center(child: CircularProgressIndicator()),
       ),
-      error: (error, stack) => Scaffold(
+      loaded: (state) => _buildContent(context, ref, state),
+      error: (error) => Scaffold(
         body: Center(child: Text('Error: $error')),
       ),
     );
@@ -29,145 +27,19 @@ class RequestView extends ConsumerWidget {
   Widget _buildContent(
     BuildContext context,
     WidgetRef ref,
-    ServiceRequestState state,
-    ServiceRequestViewModel notifier,
-    AppLocalizations localizations,
+    ServiceRequestLoaded state,
   ) {
+    final localizations = AppLocalizations.of(context);
+
     return Scaffold(
-      appBar: AppBar(title: Text(localizations.postRequestButton)),
+      appBar: AppBar(title: const Text('Publicar solicitud')),
       body: SafeArea(
         child: Padding(
           padding: const EdgeInsets.all(24),
-          child: Form(
-            child: ListView(
-              children: [
-                Text(
-                  localizations.requestDescriptionTitle,
-                  style: Theme.of(context).textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.w800),
-                ),
-                const SizedBox(height: 8),
-                Text(
-                  localizations.requestDescriptionSubtitle,
-                  style: Theme.of(context).textTheme.bodyLarge,
-                ),
-                const SizedBox(height: 24),
-                TextFormField(
-                  decoration: InputDecoration(
-                    labelText: localizations.requestTitleLabel,
-                    hintText: localizations.requestTitleHint,
-                    border: const OutlineInputBorder(),
-                    prefixIcon: const Icon(Icons.title_rounded),
-                  ),
-                  validator: (value) {
-                    if (value == null || value.trim().isEmpty) {
-                      return localizations.validationRequired;
-                    }
-                    if (value.trim().length < 5) {
-                      return localizations.validationMinLength;
-                    }
-                    return null;
-                  },
-                ),
-                const SizedBox(height: 16),
-                TextFormField(
-                  maxLines: 4,
-                  decoration: InputDecoration(
-                    labelText: localizations.requestDescriptionLabel,
-                    hintText: localizations.requestDescriptionHint,
-                    border: const OutlineInputBorder(),
-                    alignLabelWithHint: true,
-                    prefixIcon: const Icon(Icons.description_rounded),
-                  ),
-                  validator: (value) {
-                    if (value == null || value.trim().isEmpty) {
-                      return localizations.validationRequired;
-                    }
-                    if (value.trim().length < 20) {
-                      return localizations.validationMinLengthLong;
-                    }
-                    return null;
-                  },
-                ),
-                const SizedBox(height: 16),
-                TextFormField(
-                  decoration: InputDecoration(
-                    labelText: localizations.requestAddressLabel,
-                    hintText: localizations.requestAddressHint,
-                    border: const OutlineInputBorder(),
-                    prefixIcon: const Icon(Icons.location_on_rounded),
-                  ),
-                  validator: (value) {
-                    if (value == null || value.trim().isEmpty) {
-                      return localizations.validationRequired;
-                    }
-                    return null;
-                  },
-                ),
-                const SizedBox(height: 24),
-                FilledButton.icon(
-                  onPressed: state.isSubmitting ? null : () => _submit(notifier),
-                  icon: state.isSubmitting
-                      ? const SizedBox(
-                          width: 20,
-                          height: 20,
-                          child: CircularProgressIndicator(strokeWidth: 2),
-                        )
-                      : const Icon(Icons.add_task_rounded),
-                  label: Text(state.isSubmitting
-                      ? localizations.requestCreating
-                      : localizations.requestCreateButton),
-                ),
-                if (state.successMessage != null) ...[
-                  const SizedBox(height: 16),
-                  Container(
-                    padding: const EdgeInsets.all(12),
-                    decoration: BoxDecoration(
-                      color: Theme.of(context).colorScheme.primaryContainer,
-                      borderRadius: BorderRadius.circular(8),
-                    ),
-                    child: Text(
-                      state.successMessage!,
-                      style: TextStyle(color: Theme.of(context).colorScheme.onPrimaryContainer),
-                    ),
-                  ),
-                ],
-                if (state.error != null) ...[
-                  const SizedBox(height: 16),
-                  Container(
-                    padding: const EdgeInsets.all(12),
-                    decoration: BoxDecoration(
-                      color: Theme.of(context).colorScheme.errorContainer,
-                      borderRadius: BorderRadius.circular(8),
-                    ),
-                    child: Text(
-                      state.error!,
-                      style: TextStyle(color: Theme.of(context).colorScheme.onErrorContainer),
-                    ),
-                  ),
-                ],
-              ],
-            ),
-          ),
+          child: _RequestCreationForm(),
         ),
-      );
-    }
-
-  void _submit(ServiceRequestViewModel notifier) async {
-    // For now, we'll use placeholder values. In a real app, these would come from form controllers.
-    final result = await notifier.createRequest(
-      id: DateTime.now().millisecondsSinceEpoch.toString(),
-      clientId: 'current_user_id', // Would come from auth state
-      categoryId: 'plumbing', // Would come from category selection
-      title: 'Sample Request', // Would come from form field
-      description: 'Sample description', // Would come from form field
-      address: 'Sample address', // Would come from form field
-      latitude: 19.4326,
-      longitude: -99.1332,
+      ),
     );
-
-    if (result.isOk) {
-      // Navigate to success screen or show success
-    }
   }
 }
 
@@ -183,6 +55,7 @@ class _RequestCreationFormState extends ConsumerState<_RequestCreationForm> {
   final _titleController = TextEditingController();
   final _descriptionController = TextEditingController();
   final _addressController = TextEditingController();
+  String? _selectedCategory;
 
   @override
   void dispose() {
@@ -194,98 +67,121 @@ class _RequestCreationFormState extends ConsumerState<_RequestCreationForm> {
 
   @override
   Widget build(BuildContext context) {
-    final notifier = ref.read(serviceRequestViewModelProvider.notifier);
     final localizations = AppLocalizations.of(context);
+    final notifier = ref.read(serviceRequestViewModelProvider.notifier);
 
     return Form(
       key: _formKey,
       child: ListView(
         children: [
+          DropdownButtonFormField<String>(
+            value: _selectedCategory,
+            decoration: InputDecoration(
+              labelText: 'Categoría',
+              border: const OutlineInputBorder(),
+              prefixIcon: const Icon(Icons.category_rounded),
+            ),
+            items: [
+              for (final cat in ServiceCategories.values)
+                DropdownMenuItem(value: cat.id, child: Text(cat.name.value)),
+            ],
+            onChanged: (value) => setState(() => _selectedCategory = value),
+            validator: (value) => value == null ? 'Selecciona una categoría' : null,
+          ),
+          const SizedBox(height: 16),
           TextFormField(
             controller: _titleController,
             decoration: InputDecoration(
-              labelText: localizations.requestTitleLabel,
-              hintText: localizations.requestTitleHint,
+              labelText: 'Título',
+              hintText: 'Describe brevemente el trabajo',
               border: const OutlineInputBorder(),
               prefixIcon: const Icon(Icons.title_rounded),
             ),
             validator: (value) {
               if (value == null || value.trim().isEmpty) {
-                return localizations.validationRequired;
+                return 'El título es requerido';
               }
               if (value.trim().length < 5) {
-                return localizations.validationMinLength;
+                return 'El título debe tener al menos 5 caracteres';
               }
               return null;
             },
           ),
-        const SizedBox(height: 16),
-        TextFormField(
-          controller: _descriptionController,
-          maxLines: 4,
-          decoration: InputDecoration(
-            labelText: localizations.requestDescriptionLabel,
-            hintText: localizations.requestDescriptionHint,
-            border: const OutlineInputBorder(),
-            alignLabelWithHint: true,
-            prefixIcon: const Icon(Icons.description_rounded),
+          const SizedBox(height: 16),
+          TextFormField(
+            controller: _descriptionController,
+            maxLines: 4,
+            decoration: InputDecoration(
+              labelText: 'Descripción',
+              hintText: 'Describe el trabajo que necesitas...',
+              border: const OutlineInputBorder(),
+              alignLabelWithHint: true,
+              prefixIcon: const Icon(Icons.description_rounded),
+            ),
+            validator: (value) {
+              if (value == null || value.trim().isEmpty) {
+                return 'La descripción es requerida';
+              }
+              if (value.trim().length < 20) {
+                return 'La descripción debe tener al menos 20 caracteres';
+              }
+              return null;
+            },
           ),
-          validator: (value) {
-            if (value == null || value.trim().isEmpty) {
-              return localizations.validationRequired;
-            }
-            if (value.trim().length < 20) {
-              return localizations.validationMinLengthLong;
-            }
-            return null;
-          },
-        ),
-        const SizedBox(height: 16),
-        TextFormField(
-          controller: _addressController,
-          decoration: InputDecoration(
-            labelText: localizations.requestAddressLabel,
-            hintText: localizations.requestAddressHint,
-            border: const OutlineInputBorder(),
-            prefixIcon: const Icon(Icons.location_on_rounded),
+          const SizedBox(height: 16),
+          TextFormField(
+            decoration: InputDecoration(
+              labelText: 'Dirección',
+              hintText: 'Calle, número, colonia, ciudad',
+              border: const OutlineInputBorder(),
+              prefixIcon: const Icon(Icons.location_on_rounded),
+            ),
+            validator: (value) {
+              if (value == null || value.trim().isEmpty) {
+                return 'La dirección es requerida';
+              }
+              return null;
+            },
           ),
-          validator: (value) {
-            if (value == null || value.trim().isEmpty) {
-              return localizations.validationRequired;
-            }
-            return null;
-          },
-        ),
-        const SizedBox(height: 24),
-        Consumer(
-          builder: (context, ref, _) {
-            final state = ref.watch(serviceRequestViewModelProvider);
-            return FilledButton.icon(
-              onPressed: state.isSubmitting ? null : () => _submit(notifier),
-              icon: state.isSubmitting
-                  ? const SizedBox(
-                      width: 20,
-                      height: 20,
-                      child: CircularProgressIndicator(strokeWidth: 2),
-                    )
-                  : const Icon(Icons.add_task_rounded),
-              label: Text(state.isSubmitting
-                  ? localizations.requestCreating
-                  : localizations.requestCreateButton),
-            );
-          },
-        ),
-      ],
+          const SizedBox(height: 24),
+          Consumer(
+            builder: (context, ref, _) {
+              final state = ref.watch(serviceRequestViewModelProvider);
+              return state.when(
+                loading: () => const Center(child: CircularProgressIndicator()),
+                loaded: (state) => FilledButton.icon(
+                  onPressed: state.isSubmitting ? null : _submit,
+                  icon: state.isSubmitting
+                      ? const SizedBox(
+                          width: 20,
+                          height: 20,
+                          child: CircularProgressIndicator(strokeWidth: 2),
+                        )
+                      : const Icon(Icons.add_task_rounded),
+                  label: Text(state.isSubmitting
+                      ? 'Creando solicitud...'
+                      : 'Crear solicitud'),
+                ),
+                error: (error) => FilledButton.icon(
+                  onPressed: () => _submit(),
+                  icon: const Icon(Icons.add_task_rounded),
+                  label: Text('Error: $error'),
+                ),
+              );
+            },
+          ),
+        ],
+      ),
     );
   }
 
-  void _submit(ServiceRequestViewModel notifier) {
+  void _submit() {
     if (!_formKey.currentState!.validate()) return;
 
-    notifier.createRequest(
+    ref.read(serviceRequestViewModelProvider.notifier).createRequest(
       id: DateTime.now().millisecondsSinceEpoch.toString(),
       clientId: 'current_user_id',
-      categoryId: 'plumbing',
+      categoryId: _selectedCategory!,
       title: _titleController.text.trim(),
       description: _descriptionController.text.trim(),
       address: _addressController.text.trim(),
@@ -294,3 +190,13 @@ class _RequestCreationFormState extends ConsumerState<_RequestCreationForm> {
     );
   }
 }
+
+final _formKey = GlobalKey<FormState>();
+final _titleController = TextEditingController();
+final _descriptionController = TextEditingController();
+final _addressController = TextEditingController();
+String? _selectedCategory;
+
+final serviceRequestViewModelProvider = StateNotifierProvider<ServiceRequestViewModel, dynamic>(
+  (ref) => throw UnimplementedError(),
+);

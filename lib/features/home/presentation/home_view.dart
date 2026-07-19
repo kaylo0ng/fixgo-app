@@ -87,7 +87,7 @@ class HomeView extends ConsumerWidget {
             _ServiceFlowCard(localizations: localizations),
           ],
         ),
-      );
+      ),
     );
   }
 }
@@ -179,6 +179,6 @@ class _FlowStep extends StatelessWidget {
           ),
         ],
       ),
-    }
+    );
   }
 }

@@ -4,26 +4,25 @@ import 'package:fixgo/domain/core/result.dart';
 import 'package:fixgo/domain/core/value_objects.dart';
 import 'package:fixgo/domain/request/service_request.dart';
 import 'package:fixgo/domain/request/offer.dart';
+import 'package:fixgo/domain/request/repositories.dart';
 import 'package:fixgo/application/service_request/service_request_state.dart';
 import 'package:fixgo/application/providers/repositories.dart';
 
-final serviceRequestViewModelProvider = StateNotifierProvider<ServiceRequestViewModel, ServiceRequestState>((ref) {
-  return ServiceRequestViewModel(ref);
-});
+final serviceRequestViewModelProvider = StateNotifierProvider<ServiceRequestViewModel, ServiceRequestState>(ServiceRequestViewModel.new);
 
 class ServiceRequestViewModel extends StateNotifier<ServiceRequestState> {
-  ServiceRequestViewModel(this.ref) : super(const ServiceRequestState());
+  ServiceRequestViewModel(this.ref) : super(const ServiceRequestLoading());
 
   final Ref ref;
 
   Future<void> loadMyRequests(String clientId) async {
-    state = state.copyWith(isLoading: true, error: null);
+    state = const ServiceRequestLoading();
     final repo = ref.read(serviceRequestRepositoryProvider);
     final result = await repo.getByClientId(UserId.create(clientId).getOrThrow());
 
     result.fold(
-      (requests) => state = state.copyWith(requests: requests, isLoading: false),
-      (failure) => state = state.copyWith(isLoading: false, error: failure.message),
+      (requests) => state = ServiceRequestLoaded(requests: requests),
+      (failure) => state = ServiceRequestError(failure.message),
     );
   }
 
@@ -33,19 +32,19 @@ class ServiceRequestViewModel extends StateNotifier<ServiceRequestState> {
     double? longitude,
     double? maxDistanceKm,
   }) async {
-    state = state.copyWith(isLoading: true, error: null);
+    state = const ServiceRequestLoading();
     final repo = ref.read(serviceRequestRepositoryProvider);
     final result = await repo.getOpenRequests(
       categoryId: categoryId != null ? ServiceCategoryId.create(categoryId).getOrThrow() : null,
       maxDistanceKm: maxDistanceKm,
       location: latitude != null && longitude != null
-          ? Coordinates.create(latitude, longitude).getOrThrow()
+          ? Coordinates.create(latitude!, longitude!).getOrThrow()
           : null,
     );
 
     result.fold(
-      (requests) => state = state.copyWith(openRequests: requests, isLoading: false),
-      (failure) => state = state.copyWith(isLoading: false, error: failure.message),
+      (requests) => state = ServiceRequestLoaded(openRequests: requests),
+      (failure) => state = ServiceRequestError(failure.message),
     );
   }
 
@@ -60,7 +59,7 @@ class ServiceRequestViewModel extends StateNotifier<ServiceRequestState> {
     required double longitude,
     double? estimatedPrice,
   }) async {
-    state = state.copyWith(isSubmitting: true, error: null, successMessage: null);
+    state = const ServiceRequestLoading();
     final repo = ref.read(serviceRequestRepositoryProvider);
 
     final createResult = ServiceRequest.create(
@@ -76,21 +75,22 @@ class ServiceRequestViewModel extends StateNotifier<ServiceRequestState> {
     );
 
     if (createResult.isErr) {
-      state = state.copyWith(isSubmitting: false, error: createResult.failure.message);
+      state = ServiceRequestError(createResult.failure.message);
       return Result.err(createResult.failure);
     }
 
-    final saveResult = await ref.read(serviceRequestRepositoryProvider).create(createResult.getOrThrow());
+    final saveResult = await repo.create(createResult.getOrThrow());
 
     saveResult.fold(
       (saved) {
-        state = state.copyWith(
-          requests: [...state.requests, saved],
+        state = ServiceRequestLoaded(
+          requests: [saved],
+          openRequests: [saved],
           isSubmitting: false,
           successMessage: 'Solicitud creada correctamente',
         );
       },
-      (failure) => state = state.copyWith(isSubmitting: false, error: failure.message),
+      (failure) => state = ServiceRequestError(failure.message),
     );
 
     return saveResult;
@@ -106,26 +106,26 @@ class ServiceRequestViewModel extends StateNotifier<ServiceRequestState> {
         final saveResult = await repo.update(published);
         saveResult.fold(
           (saved) {
-            state = state.copyWith(
-              requests: state.requests.map((r) => r.id == saved.id ? saved : r).toList(),
-              openRequests: state.openRequests.map((r) => r.id == saved.id ? saved : r).toList(),
+            state = ServiceRequestLoaded(
+              requests: [saved],
+              openRequests: [saved],
             );
           },
-          (failure) => state = state.copyWith(error: failure.message),
+          (failure) => state = ServiceRequestError(failure.message),
         );
       },
-      (failure) => state = state.copyWith(error: failure.message),
+      (failure) => state = ServiceRequestError(failure.message),
     );
   }
 
   Future<void> loadRequestOffers(String requestId) async {
-    state = state.copyWith(isLoading: true, error: null);
+    state = const ServiceRequestLoading();
     final repo = ref.read(offerRepositoryProvider);
     final result = await repo.getByRequestId(requestId);
 
     result.fold(
-      (offers) => state = state.copyWith(offers: offers, isLoading: false),
-      (failure) => state = state.copyWith(isLoading: false, error: failure.message),
+      (offers) => state = ServiceRequestLoaded(offers: offers),
+      (failure) => state = ServiceRequestError(failure.message),
     );
   }
 
@@ -137,7 +137,7 @@ class ServiceRequestViewModel extends StateNotifier<ServiceRequestState> {
     required int durationMinutes,
     required String message,
   }) async {
-    state = state.copyWith(isSubmitting: true, error: null);
+    state = const ServiceRequestLoading();
     final repo = ref.read(offerRepositoryProvider);
 
     final createResult = Offer.create(
@@ -150,21 +150,21 @@ class ServiceRequestViewModel extends StateNotifier<ServiceRequestState> {
     );
 
     if (createResult.isErr) {
-      state = state.copyWith(isSubmitting: false, error: createResult.failure.message);
+      state = ServiceRequestError(createResult.failure.message);
       return;
     }
 
-    final saveResult = await ref.read(offerRepositoryProvider).create(createResult.getOrThrow());
+    final saveResult = await repo.create(createResult.getOrThrow());
 
     saveResult.fold(
       (saved) {
-        state = state.copyWith(
-          offers: [...state.offers, saved],
+        state = ServiceRequestLoaded(
+          offers: [saved],
           isSubmitting: false,
           successMessage: 'Oferta enviada correctamente',
         );
       },
-      (failure) => state = state.copyWith(isSubmitting: false, error: failure.message),
+      (failure) => state = ServiceRequestError(failure.message),
     );
   }
 
@@ -180,38 +180,35 @@ class ServiceRequestViewModel extends StateNotifier<ServiceRequestState> {
 
         await saveOfferResult.fold(
           (savedOffer) async {
-            state = state.copyWith(offers: state.offers.map((o) => o.id == savedOffer.id ? savedOffer : o).toList());
-
             final requestResult = await ref.read(serviceRequestRepositoryProvider).getById(RequestId.create(requestId).getOrThrow());
-            await requestResult.fold(
+            requestResult.fold(
               (request) async {
                 final updated = request.assignTechnician(offerId);
-                final saveRequestResult = await ref.read(serviceRequestRepositoryProvider).update(updated);
+                final saveRequestResult = await requestRepo.update(updated);
                 saveRequestResult.fold(
                   (savedRequest) {
-                    state = state.copyWith(
+                    state = ServiceRequestLoaded(
                       selectedRequest: savedRequest,
-                      requests: state.requests.map((r) => r.id == savedRequest.id ? savedRequest : r).toList(),
                     );
                   },
-                  (failure) => state = state.copyWith(error: failure.message),
+                  (failure) => state = ServiceRequestError(failure.message),
                 );
               },
-              (failure) => state = state.copyWith(error: failure.message),
+              (failure) => state = ServiceRequestError(failure.message),
             );
           },
-          (failure) => state = state.copyWith(error: failure.message),
+          (failure) => state = ServiceRequestError(failure.message),
         );
       },
-      (failure) => state = state.copyWith(error: failure.message),
+      (failure) => state = ServiceRequestError(failure.message),
     );
   }
 
   void clearError() {
-    state = state.copyWith(error: null);
+    state = const ServiceRequestLoaded();
   }
 
   void clearSuccess() {
-    state = state.copyWith(successMessage: null);
+    state = const ServiceRequestLoaded();
   }
 }
