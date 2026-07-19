@@ -4,7 +4,6 @@ import 'package:fixgo/domain/core/result.dart';
 import 'package:fixgo/domain/core/value_objects.dart';
 import 'package:fixgo/domain/request/service_request.dart';
 import 'package:fixgo/domain/request/offer.dart';
-import 'package:fixgo/domain/request/repositories.dart';
 import 'package:fixgo/application/service_request/service_request_state.dart';
 import 'package:fixgo/application/providers/repositories.dart';
 
@@ -20,7 +19,7 @@ class ServiceRequestViewModel extends StateNotifier<ServiceRequestState> {
   Future<void> loadMyRequests(String clientId) async {
     state = state.copyWith(isLoading: true, error: null);
     final repo = ref.read(serviceRequestRepositoryProvider);
-    final result = await repo.getByClientId(UserId.create(clientId).value!);
+    final result = await repo.getByClientId(UserId.create(clientId).getOrThrow());
 
     result.fold(
       (requests) => state = state.copyWith(requests: requests, isLoading: false),
@@ -37,10 +36,10 @@ class ServiceRequestViewModel extends StateNotifier<ServiceRequestState> {
     state = state.copyWith(isLoading: true, error: null);
     final repo = ref.read(serviceRequestRepositoryProvider);
     final result = await repo.getOpenRequests(
-      categoryId: categoryId != null ? ServiceCategoryId.create(categoryId).value : null,
+      categoryId: categoryId != null ? ServiceCategoryId.create(categoryId).getOrThrow() : null,
       maxDistanceKm: maxDistanceKm,
       location: latitude != null && longitude != null
-          ? Coordinates.create(latitude!, longitude!).value
+          ? Coordinates.create(latitude, longitude).getOrThrow()
           : null,
     );
 
@@ -81,7 +80,7 @@ class ServiceRequestViewModel extends StateNotifier<ServiceRequestState> {
       return Result.err(createResult.failure);
     }
 
-    final saveResult = await ref.read(serviceRequestRepositoryProvider).create(createResult.value);
+    final saveResult = await ref.read(serviceRequestRepositoryProvider).create(createResult.getOrThrow());
 
     saveResult.fold(
       (saved) {
@@ -99,7 +98,7 @@ class ServiceRequestViewModel extends StateNotifier<ServiceRequestState> {
 
   Future<void> publishRequest(String requestId) async {
     final repo = ref.read(serviceRequestRepositoryProvider);
-    final getResult = await repo.getById(RequestId.create(requestId).value!);
+    final getResult = await repo.getById(RequestId.create(requestId).getOrThrow());
 
     await getResult.fold(
       (request) async {
@@ -155,7 +154,7 @@ class ServiceRequestViewModel extends StateNotifier<ServiceRequestState> {
       return;
     }
 
-    final saveResult = await ref.read(offerRepositoryProvider).create(createResult.value);
+    final saveResult = await ref.read(offerRepositoryProvider).create(createResult.getOrThrow());
 
     saveResult.fold(
       (saved) {
@@ -183,7 +182,7 @@ class ServiceRequestViewModel extends StateNotifier<ServiceRequestState> {
           (savedOffer) async {
             state = state.copyWith(offers: state.offers.map((o) => o.id == savedOffer.id ? savedOffer : o).toList());
 
-            final requestResult = await ref.read(serviceRequestRepositoryProvider).getById(RequestId.create(requestId).value!);
+            final requestResult = await ref.read(serviceRequestRepositoryProvider).getById(RequestId.create(requestId).getOrThrow());
             await requestResult.fold(
               (request) async {
                 final updated = request.assignTechnician(offerId);

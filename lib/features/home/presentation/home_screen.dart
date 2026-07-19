@@ -71,7 +71,7 @@ class _HomeScreenState extends State<HomeScreen> {
               runSpacing: 10,
               children: [
                 for (final category in ServiceCategories.values)
-                  ServiceCategoryChip(label: category.name),
+                  ServiceCategoryChip(label: category.name.value),
               ],
             ),
             const SizedBox(height: 28),

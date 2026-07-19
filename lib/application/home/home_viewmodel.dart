@@ -1,9 +1,5 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import 'package:fixgo/domain/core/result.dart';
-import 'package:fixgo/domain/category/service_category.dart';
-import 'package:fixgo/domain/request/service_request.dart';
-import 'package:fixgo/domain/technician/technician_profile.dart';
 import 'package:fixgo/domain/core/value_objects.dart';
 import 'package:fixgo/application/home/home_state.dart';
 import 'package:fixgo/application/providers/repositories.dart';

@@ -3,8 +3,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:fixgo/domain/core/result.dart';
 import 'package:fixgo/domain/core/value_objects.dart';
 import 'package:fixgo/domain/technician/technician_profile.dart';
-import 'package:fixgo/domain/technician/repositories.dart';
-import 'package:fixgo/domain/rating/rating.dart';
 import 'package:fixgo/application/technician/technician_state.dart';
 import 'package:fixgo/application/providers/repositories.dart';
 
@@ -19,7 +17,7 @@ class TechnicianViewModel extends Notifier<TechnicianState> {
   Future<void> loadProfile(String userId) async {
     state = state.copyWith(isLoading: true, error: null);
     final repo = ref.read(technicianProfileRepositoryProvider);
-    final result = await repo.getByUserId(UserId.create(userId).value!);
+    final result = await repo.getByUserId(UserId.create(userId).getOrThrow());
 
     result.fold(
       (profile) => state = state.copyWith(profile: profile, isLoading: false),
@@ -56,7 +54,7 @@ class TechnicianViewModel extends Notifier<TechnicianState> {
       return Result.err(createResult.failure);
     }
 
-    final saveResult = await repo.create(createResult.value);
+    final saveResult = await repo.create(createResult.getOrThrow());
 
     saveResult.fold(
       (saved) {
