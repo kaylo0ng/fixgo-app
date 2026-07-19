@@ -1,8 +1,18 @@
 import 'package:fixgo/app/fixgo_app.dart';
+import 'package:fixgo/infrastructure/services/service_locator.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:get_it/get_it.dart';
 
 void main() {
+  setUpAll(() {
+    setupDependencies();
+  });
+
+  tearDownAll(() {
+    GetIt.instance.reset();
+  });
+
   testWidgets('shows FixGo home screen', (WidgetTester tester) async {
     await tester.pumpWidget(
       const MaterialApp(
@@ -31,6 +41,7 @@ void main() {
     );
 
     await tester.pumpAndSettle();
+
     await tester.tap(find.text('Publicar solicitud'));
     await tester.pumpAndSettle();
 

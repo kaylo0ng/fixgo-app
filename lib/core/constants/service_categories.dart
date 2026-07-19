@@ -5,15 +5,15 @@ class ServiceCategories {
 
   static final values = <ServiceCategory>[
     ServiceCategory.create(
-      id: 'air_conditioning',
+      id: 'hvac',
       name: 'Aire acondicionado',
       iconName: 'air_conditioning',
       description: 'Instalación, revisión y mantenimiento de equipos.',
     ).getOrThrow(),
     ServiceCategory.create(
-      id: 'electricity',
+      id: 'electrical',
       name: 'Electricidad',
-      iconName: 'electricity',
+      iconName: 'electrical',
       description: 'Reparaciones, puntos eléctricos e instalaciones básicas.',
     ).getOrThrow(),
     ServiceCategory.create(
@@ -23,9 +23,9 @@ class ServiceCategories {
       description: 'Fugas, tuberías, grifería y mantenimiento.',
     ).getOrThrow(),
     ServiceCategory.create(
-      id: 'maintenance',
+      id: 'masonry',
       name: 'Mantenimiento',
-      iconName: 'maintenance',
+      iconName: 'masonry',
       description: 'Arreglos generales y soporte para el hogar.',
     ).getOrThrow(),
   ];

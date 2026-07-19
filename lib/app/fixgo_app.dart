@@ -4,7 +4,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'package:fixgo/app/theme/app_theme.dart';
 import 'package:fixgo/features/home/presentation/home_screen.dart';
-import 'package:fixgo/infrastructure/services/service_locator.dart';
 import 'package:fixgo/l10n/app_localizations.dart';
 
 class FixGoApp extends ConsumerStatefulWidget {
@@ -19,12 +18,6 @@ class _FixGoAppState extends ConsumerState<FixGoApp> {
   final GlobalKey<ScaffoldMessengerState> messengerKey = GlobalKey<ScaffoldMessengerState>();
 
   final ThemeMode _themeMode = ThemeMode.system;
-
-  @override
-  void initState() {
-    super.initState();
-    setupDependencies();
-  }
 
   @override
   Widget build(BuildContext context) {
